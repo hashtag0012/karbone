@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-white/10;
+  }
+  body {
+    @apply bg-charcoal text-white font-inter;
+    scroll-behavior: smooth;
+  }
+  
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-charcoal;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-luxury-gold rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-copper;
+  }
+}
+
+@layer components {
+  .luxury-heading {
+    @apply font-cinzel uppercase tracking-mega-wide font-semibold;
+    word-spacing: 0.8em;
+  }
+  
+  .luxury-heading-xl {
+    @apply font-cinzel uppercase tracking-luxury-spacing font-bold;
+    word-spacing: 1.2em;
+  }
+  
+  .luxury-button {
+    @apply bg-gradient-to-r from-luxury-gold to-copper text-charcoal px-10 py-5 uppercase font-semibold tracking-extra-wide 
+           transition-all duration-500 hover:from-copper hover:to-bronze hover:shadow-2xl hover:shadow-luxury-gold/30
+           focus:outline-none focus:ring-2 focus:ring-luxury-gold focus:ring-offset-2 focus:ring-offset-charcoal
+           transform hover:scale-105;
+    word-spacing: 0.3em;
+  }
+  
+  .section-padding {
+    @apply py-26 lg:py-42 px-8 lg:px-12;
+  }
+  
+  .section-padding-xl {
+    @apply py-34 lg:py-50 px-10 lg:px-16;
+  }
+  
+  .container-max {
+    @apply max-w-7xl mx-auto;
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-r from-luxury-gold via-copper to-bronze bg-clip-text text-transparent;
+  }
+  
+  .text-gradient-alt {
+    @apply bg-gradient-to-r from-champagne via-luxury-gold to-copper bg-clip-text text-transparent;
+  }
+  
+  .glass-effect {
+    @apply bg-gradient-to-br from-white/5 to-white/5 border border-white/15;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  
+  .glass-effect-dark {
+    @apply bg-gradient-to-br from-black/40 to-black/20 border border-white/10;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  
+  .hover-glow {
+    @apply transition-all duration-500 hover:shadow-2xl hover:shadow-luxury-gold/25 hover:scale-105;
+  }
+  
+  .gradient-bg-1 {
+    @apply bg-gradient-to-br from-dark-charcoal via-charcoal to-dark-brown;
+  }
+  
+  .gradient-bg-2 {
+    @apply bg-gradient-to-tr from-charcoal via-coffee to-dark-charcoal;
+  }
+  
+  .gradient-bg-3 {
+    @apply bg-gradient-to-bl from-dark-brown via-charcoal to-black;
+  }
+  
+  .luxury-text-spacing {
+    word-spacing: 0.4em;
+    letter-spacing: 0.15em;
+  }
+  
+  .mega-text-spacing {
+    word-spacing: 0.8em;
+    letter-spacing: 0.25em;
+  }
+  
+  .tilt-card {
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease-out;
+  }
+  
+  .tilt-card:hover {
+    transform: perspective(1000px) rotateX(5deg) rotateY(-5deg) translateZ(20px);
+  }
+}

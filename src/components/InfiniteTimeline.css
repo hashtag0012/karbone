@@ -1,0 +1,78 @@
+/* Hide scrollbar for infinite timeline */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+/* Smooth scrolling animation */
+.infinite-timeline-container {
+  overflow: hidden;
+  position: relative;
+}
+
+.infinite-timeline-track {
+  display: flex;
+  animation: infiniteScroll 60s linear infinite;
+  gap: 2rem;
+}
+
+.infinite-timeline-track:hover {
+  animation-play-state: paused;
+}
+
+/* Vertical scrolling track */
+.infinite-timeline-track-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 2rem 0;
+}
+
+.infinite-timeline-track-vertical:hover {
+  animation-play-state: paused;
+}
+
+@keyframes infiniteScroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes infiniteScrollVertical {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-33.33%);
+  }
+}
+
+/* Gradient fade effects */
+.timeline-fade-left {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 80px;
+  background: linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 50%, transparent 100%);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.timeline-fade-right {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 80px;
+  background: linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 50%, transparent 100%);
+  z-index: 10;
+  pointer-events: none;
+}
