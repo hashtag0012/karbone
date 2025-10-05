@@ -118,6 +118,26 @@ const Prism = ({
     // Calculate responsive scale
     const responsiveScale = getResponsiveScale();
     
+    // Define all required constants
+    const H = height;
+    const BASE_HALF = baseWidth / 2;
+    const GLOW = glow;
+    const NOISE = noise;
+    const SAT = 1.0;
+    const SCALE = scale;
+    const HUE = hueShift;
+    const CFREQ = colorFrequency;
+    const BLOOM = bloom;
+    const TS = timeScale;
+    const HOVSTR = hoverStrength;
+    const INERT = inertia;
+    const RSX = 0.5;
+    const RSY = 0.5;
+    const RSZ = 0.5;
+    const offX = offset.x || 0;
+    const offY = offset.y || 0;
+    const t0 = performance.now();
+    
     // Initialize renderer with optimized settings
     const renderer = new Renderer({
       dpr: settings.dpr, // Use the dpr from settings
@@ -192,92 +212,43 @@ const Prism = ({
       }
     `;
 
-    // Fragment shader with optimized effects
+    // Fragment shader with pyramid raymarching effect
     const fragment = /* glsl */ `
       precision highp float;
       
-      #define PI 3.14159265359
-      #define TAU 6.28318530718
-      
-      uniform vec2  iResolution;
+      uniform vec2 iResolution;
       uniform float iTime;
-      uniform float uScale;
-      uniform float uHueShift;
-      uniform float uNoise;
+      uniform float uHeight;
+      uniform float uBaseHalf;
+      uniform int uUseBaseWobble;
+      uniform mat3 uRot;
       uniform float uGlow;
+      uniform vec2 uOffsetPx;
+      uniform float uNoise;
+      uniform float uSaturation;
+      uniform float uHueShift;
       uniform float uColorFreq;
+      uniform float uBloom;
+      uniform float uCenterShift;
+      uniform float uInvBaseHalf;
+      uniform float uInvHeight;
+      uniform float uMinAxis;
+      uniform float uPxScale;
+      uniform float uTimeScale;
       
       varying vec2 vUv;
       
-      // Simplex noise function
-      float snoise(vec2 v) {
-        const vec4 C = vec4(0.211324865405187, 0.366025403784439,
-                           -0.577350269189626, 0.024390243902439);
-        vec2 i  = floor(v + dot(v, C.yy));
-        vec2 x0 = v -   i + dot(i, C.xx);
-        vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
-        vec4 x12 = x0.xyxy + C.xxzz;
-        x12.xy -= i1;
-        i = mod289(i);
-        vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0 ))
-              + i.x + vec3(0.0, i1.x, 1.0 ));
-        vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
-        m = m*m;
-        m = m*m;
-        vec3 x = 2.0 * fract(p * C.www) - 1.0;
-        vec3 h = abs(x) - 0.5;
-        vec3 ox = floor(x + 0.5);
-        vec3 a0 = x - ox;
-        m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h);
-        vec3 g;
-        g.x  = a0.x  * x0.x  + h.x  * x0.y;
-        g.yz = a0.yz * x12.xz + h.yz * x12.yw;
-        return 130.0 * dot(m, g);
-      }
+      vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+      vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+      vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
       
-      // Helper functions
-      vec3 hsv2rgb(vec3 c) {
-        vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-        vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-        return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
-      }
-      
-      // Main shader
-      void main() {
-        // Normalized pixel coordinates (from 0 to 1)
-        vec2 uv = vUv;
-        
-        // Aspect ratio correction
-        float aspect = iResolution.x / iResolution.y;
-        vec2 p = (uv - 0.5) * 2.0;
-        p.x *= aspect;
-        
-        // Distance from center
-        float d = length(p) * uScale;
-        
-        // Base color with hue shift
-        float hue = iTime * 0.1 + uHueShift;
-        vec3 color = hsv2rgb(vec3(
-          fract(hue * 0.1), // Hue
-          0.7, // Saturation
-          0.9 // Value
-        ));
-        
-        // Glow effect
-        float a = smoothstep(0.8, 0.0, d) * uGlow;
-        
-        // Add noise for organic feel
-        float n = snoise(uv * 10.0 + iTime * 0.5) * 0.1 * uNoise;
-        a = clamp(a + n, 0.0, 1.0);
-        
-        // Apply color and alpha
-        gl_FragColor = vec4(color * a, a);
+      vec4 tanh4(vec4 x){
+        vec4 e2x = exp(2.0*x);
+        return (e2x - 1.0) / (e2x + 1.0);
       }
 
-      // Helper function for smooth transitions
-      float smootha(float a, float b, float t) {
-        t = clamp(t, 0.0, 1.0);
-        return mix(a, b, t * t * (3.0 - 2.0 * t));
+      float rand(vec2 co){
+        return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453123);
       }
 
       float sdOctaAnisoInv(vec3 p){
@@ -527,12 +498,7 @@ const Prism = ({
       
       lastFrameTime = t;
       const time = (t - t0) * 0.001;
-      program.uniforms.iTime.value = time * timeScale;
-      
-      // Adjust quality settings based on performance
-      const targetSteps = isMobile() ? 
-        Math.max(30, settings.maxSteps * (1 - Math.min(1, time * 0.001))) : 
-        settings.maxSteps;
+      program.uniforms.iTime.value = time;
 
       let continueRAF = true;
 
