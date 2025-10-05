@@ -18,7 +18,7 @@
     "lucide-react": "^0.244.0",
     "@react-three/fiber": "^8.13.5",
     "@react-three/drei": "^9.79.0",
-    "three": "^0.154.0",
+    "three": "^0.160.0",
     "@radix-ui/react-slot": "^1.0.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
