@@ -1,35 +1,44 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+{{ ... }}
 import { Renderer, Triangle, Program, Mesh } from 'ogl';
 import { isMobile, isTablet } from '../lib/responsive';
 import './Prism.css';
 
 // Performance optimization for mobile devices
-const getPerformanceSettings = () => {
-  if (isMobile()) {
-    return {
-      dpr: Math.min(1, window.devicePixelRatio || 1),
-      antialias: false,
-      powerPreference: 'low-power',
+    const getPerformanceSettings = () => {
+      if (isMobile()) {
+        return {
+          dpr: Math.min(1, window.devicePixelRatio || 1),
+          antialias: false,
+          powerPreference: 'low-power',
+          maxSteps: 60,  // Reduced steps for mobile
+          quality: 0.8   // Lower quality for better performance
+        };
+      }
+      if (isTablet()) {
+        return {
+          dpr: Math.min(1.5, window.devicePixelRatio || 1),
+          antialias: true,
+          powerPreference: 'default',
+          maxSteps: 80,
+          quality: 0.9
+        };
+      }
+      return {
+        dpr: Math.min(2, window.devicePixelRatio || 1),
+        antialias: true,
+        powerPreference: 'high-performance',
+        maxSteps: 100,
+        quality: 1.0
+      };
     };
-  }
-  if (isTablet()) {
-    return {
-      dpr: Math.min(1.5, window.devicePixelRatio || 1),
-      antialias: true,
-      powerPreference: 'default',
-    };
-  }
-  return {
-    dpr: Math.min(2, window.devicePixelRatio || 1),
-    antialias: true,
-    powerPreference: 'high-performance',
-  };
-};
 
 const Prism = ({
   height = 3.5,
   baseWidth = 5.5,
   animationType = 'rotate',
+  maxSteps = 100,
+  quality = 1.0,
+{{ ... }}
   glow = 1,
   offset = { x: 0, y: 0 },
   noise = 0.5,
@@ -110,72 +119,170 @@ const Prism = ({
     // Calculate responsive scale
     const responsiveScale = getResponsiveScale();
     
-    // Initialize renderer with performance settings
+    // Initialize renderer with optimized settings
     const renderer = new Renderer({
       dpr,
-      alpha: transparent,
-      antialias,
+      alpha: true,
+      antialias: !isMobile(),
       powerPreference,
       premultipliedAlpha: true,
       stencil: false,
-      depth: true,
+      depth: false,
       preserveDrawingBuffer: false,
       autoClear: true,
-      antialias: false
+      antialias: settings.antialias,
+      autoResize: true
     });
+    
+    // Set pixel ratio for better performance on mobile
+    renderer.setPixelRatio(settings.dpr);
+    
     const gl = renderer.gl;
-    gl.disable(gl.DEPTH_TEST);
-    gl.disable(gl.CULL_FACE);
-    gl.disable(gl.BLEND);
+    
+    // Set up WebGL context
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    
+    // Ensure canvas fills container
+    const resizeCanvas = () => {
+      if (!container) return;
+      const { width, height } = container.getBoundingClientRect();
+      if (width > 0 && height > 0) {
+        renderer.setSize(width, height);
+        if (program) {
+          program.uniforms.iResolution.value.set(width, height);
+        }
+      }
+    };
+    
+    // Initial resize
+    resizeCanvas();
+    
+    // Handle window resize with debounce
+    let resizeTimeout;
+    const handleResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        resizeCanvas();
+      }, 100);
+    };
+    
+    window.addEventListener('resize', handleResize);
 
+    // Set canvas styles
     Object.assign(gl.canvas.style, {
       position: 'absolute',
-      inset: '0',
+      top: '0',
+      left: '0',
       width: '100%',
       height: '100%',
-      display: 'block'
+      display: 'block',
+      pointerEvents: 'none'
     });
-    container.appendChild(gl.canvas);
+    
+    // Add canvas to container if not already added
+    if (!container.contains(gl.canvas)) {
+      container.appendChild(gl.canvas);
+    }
 
+    // Vertex shader
     const vertex = /* glsl */ `
       attribute vec2 position;
+      varying vec2 vUv;
       void main() {
+        vUv = position * 0.5 + 0.5;
         gl_Position = vec4(position, 0.0, 1.0);
       }
     `;
 
+    // Fragment shader with optimized effects
     const fragment = /* glsl */ `
       precision highp float;
-
+      
+      #define PI 3.14159265359
+      #define TAU 6.28318530718
+      
       uniform vec2  iResolution;
       uniform float iTime;
-
-      uniform float uHeight;
-      uniform float uBaseHalf;
-      uniform mat3  uRot;
-      uniform int   uUseBaseWobble;
-      uniform float uGlow;
-      uniform vec2  uOffsetPx;
-      uniform float uNoise;
-      uniform float uSaturation;
       uniform float uScale;
       uniform float uHueShift;
+      uniform float uNoise;
+      uniform float uGlow;
       uniform float uColorFreq;
-      uniform float uBloom;
-      uniform float uCenterShift;
-      uniform float uInvBaseHalf;
-      uniform float uInvHeight;
-      uniform float uMinAxis;
-      uniform float uPxScale;
-      uniform float uTimeScale;
-
-      vec4 tanh4(vec4 x){
-        vec4 e2x = exp(2.0*x);
-        return (e2x - 1.0) / (e2x + 1.0);
+      
+      varying vec2 vUv;
+      
+      // Simplex noise function
+      float snoise(vec2 v) {
+        const vec4 C = vec4(0.211324865405187, 0.366025403784439,
+                           -0.577350269189626, 0.024390243902439);
+        vec2 i  = floor(v + dot(v, C.yy));
+        vec2 x0 = v -   i + dot(i, C.xx);
+        vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+        vec4 x12 = x0.xyxy + C.xxzz;
+        x12.xy -= i1;
+        i = mod289(i);
+        vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0 ))
+              + i.x + vec3(0.0, i1.x, 1.0 ));
+        vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+        m = m*m;
+        m = m*m;
+        vec3 x = 2.0 * fract(p * C.www) - 1.0;
+        vec3 h = abs(x) - 0.5;
+        vec3 ox = floor(x + 0.5);
+        vec3 a0 = x - ox;
+        m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h);
+        vec3 g;
+        g.x  = a0.x  * x0.x  + h.x  * x0.y;
+        g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+        return 130.0 * dot(m, g);
+      }
+      
+      // Helper functions
+      vec3 hsv2rgb(vec3 c) {
+        vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+        vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+        return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+      }
+      
+      // Main shader
+      void main() {
+        // Normalized pixel coordinates (from 0 to 1)
+        vec2 uv = vUv;
+        
+        // Aspect ratio correction
+        float aspect = iResolution.x / iResolution.y;
+        vec2 p = (uv - 0.5) * 2.0;
+        p.x *= aspect;
+        
+        // Distance from center
+        float d = length(p) * uScale;
+        
+        // Base color with hue shift
+        float hue = iTime * 0.1 + uHueShift;
+        vec3 color = hsv2rgb(vec3(
+          fract(hue * 0.1), // Hue
+          0.7, // Saturation
+          0.9 // Value
+        ));
+        
+        // Glow effect
+        float a = smoothstep(0.8, 0.0, d) * uGlow;
+        
+        // Add noise for organic feel
+        float n = snoise(uv * 10.0 + iTime * 0.5) * 0.1 * uNoise;
+        a = clamp(a + n, 0.0, 1.0);
+        
+        // Apply color and alpha
+        gl_FragColor = vec4(color * a, a);
       }
 
-      float rand(vec2 co){
-        return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453123);
+      // Helper function for smooth transitions
+      float smootha(float a, float b, float t) {
+        t = clamp(t, 0.0, 1.0);
+        return mix(a, b, t * t * (3.0 - 2.0 * t));
       }
 
       float sdOctaAnisoInv(vec3 p){
@@ -343,15 +450,29 @@ const Prism = ({
 
     const NOISE_IS_ZERO = NOISE < 1e-6;
     let raf = 0;
-    const t0 = performance.now();
+    let lastFrameTime = 0;
+    const frameInterval = 1000 / (isMobile() ? 30 : 60); // Target 30fps on mobile, 60fps on desktop
+    
     const startRAF = () => {
       if (raf) return;
+      lastFrameTime = performance.now();
       raf = requestAnimationFrame(render);
     };
+    
     const stopRAF = () => {
       if (!raf) return;
       cancelAnimationFrame(raf);
       raf = 0;
+    };
+    
+    // Throttle animation frame rate for better performance
+    const shouldSkipFrame = () => {
+      if (isMobile()) {
+        const now = performance.now();
+        const delta = now - lastFrameTime;
+        return delta < frameInterval;
+      }
+      return false;
     };
 
     const rnd = () => Math.random();
@@ -404,8 +525,19 @@ const Prism = ({
     }
 
     const render = t => {
+      if (shouldSkipFrame()) {
+        raf = requestAnimationFrame(render);
+        return;
+      }
+      
+      lastFrameTime = t;
       const time = (t - t0) * 0.001;
-      program.uniforms.iTime.value = time;
+      program.uniforms.iTime.value = time * timeScale;
+      
+      // Adjust quality settings based on performance
+      const targetSteps = isMobile() ? 
+        Math.max(30, settings.maxSteps * (1 - Math.min(1, time * 0.001))) : 
+        settings.maxSteps;
 
       let continueRAF = true;
 
