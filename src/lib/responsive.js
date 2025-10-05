@@ -1,6 +1,4 @@
-import React, { useState, useEffect } from 'react';
-
-// Responsive breakpoints
+// Responsive breakpoints and utilities
 export const breakpoints = {
   xs: '320px',
   sm: '480px',
@@ -144,25 +142,4 @@ export const getResponsiveSpacing = (baseSpacing, options = {}) => {
   }
 
   return Math.max(minSpacing, Math.min(maxSpacing, spacing));
-};
-
-// Hook for responsive values that update on resize
-export const useResponsiveValue = (value, options = {}) => {
-  const [responsiveValue, setResponsiveValue] = useState(value);
-
-  useEffect(() => {
-    const updateValue = () => {
-      if (typeof value === 'function') {
-        setResponsiveValue(value());
-      } else {
-        setResponsiveValue(value);
-      }
-    };
-
-    updateValue();
-    window.addEventListener('resize', updateValue);
-    return () => window.removeEventListener('resize', updateValue);
-  }, [value]);
-
-  return responsiveValue;
 };
