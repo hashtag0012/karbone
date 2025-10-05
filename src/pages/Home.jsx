@@ -62,7 +62,7 @@ const Home = () => {
       className="min-h-screen"
     >
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 sm:px-6 lg:px-8">
+      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-4 sm:px-6 lg:px-8">
         {/* Background Image - Lowest Layer */}
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')] bg-cover bg-center opacity-20"></div>
@@ -70,27 +70,29 @@ const Home = () => {
         </div>
 
         {/* 3D Model - Responsive scaling */}
-        <div className="absolute bottom-0 left-0 right-0 z-10 flex items-end justify-center pb-5 h-4/5">
-          <div className="w-full h-full max-w-none transform scale-75 md:scale-100 transition-transform duration-300">
-            <Model3D className="opacity-100" />
+        <div className="relative z-10 w-full h-[50vh] md:h-[60vh] flex items-end justify-center">
+          <div className="w-full h-full max-w-md mx-auto transform scale-90 md:scale-100 transition-all duration-300">
+            <Model3D className="w-full h-full" />
           </div>
         </div>
 
         {/* Prism Effect - Responsive */}
-        <div className="absolute inset-0 z-19">
-          <Prism
-            animationType="rotate"
-            timeScale={0.5}
-            height={3.5}
-            baseWidth={5.5}
-            scale={window.innerWidth < 768 ? 1.5 : 2.5}
-            hueShift={0.8}
-            colorFrequency={0.8}
-            noise={0.3}
-            glow={window.innerWidth < 768 ? 0.8 : 1.2}
-            transparent={true}
-            className="transition-all duration-300"
-          />
+        <div className="absolute inset-0 z-5 flex items-center justify-center pointer-events-none">
+          <div className="relative w-full max-w-2xl h-[60vh] md:h-[70vh]">
+            <Prism
+              animationType="rotate"
+              timeScale={0.5}
+              height={3.5}
+              baseWidth={5.5}
+              scale={window.innerWidth < 768 ? 1.2 : 2}
+              hueShift={0.8}
+              colorFrequency={0.8}
+              noise={0.3}
+              glow={window.innerWidth < 768 ? 0.6 : 1.2}
+              transparent={true}
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300"
+            />
+          </div>
         </div>
 
         {/* Particles Effect - Above Everything */}

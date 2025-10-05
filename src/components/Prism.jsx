@@ -1,6 +1,30 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Renderer, Triangle, Program, Mesh } from 'ogl';
+import { isMobile, isTablet } from '../lib/responsive';
 import './Prism.css';
+
+// Performance optimization for mobile devices
+const getPerformanceSettings = () => {
+  if (isMobile()) {
+    return {
+      dpr: Math.min(1, window.devicePixelRatio || 1),
+      antialias: false,
+      powerPreference: 'low-power',
+    };
+  }
+  if (isTablet()) {
+    return {
+      dpr: Math.min(1.5, window.devicePixelRatio || 1),
+      antialias: true,
+      powerPreference: 'default',
+    };
+  }
+  return {
+    dpr: Math.min(2, window.devicePixelRatio || 1),
+    antialias: true,
+    powerPreference: 'high-performance',
+  };
+};
 
 const Prism = ({
   height = 3.5,
@@ -16,38 +40,87 @@ const Prism = ({
   hoverStrength = 2,
   inertia = 0.05,
   bloom = 1,
-  suspendWhenOffscreen = false,
-  timeScale = 0.5
+  suspendWhenOffscreen = true, // Default to true for better performance
+  timeScale = 0.5,
+  className = ''
 }) => {
   const containerRef = useRef(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [isVisible, setIsVisible] = useState(true);
+  const animationRef = useRef();
+  const lastUpdateTime = useRef(0);
+  const targetRotation = useRef({ x: 0, y: 0 });
+  const currentRotation = useRef({ x: 0, y: 0 });
+  const mousePosition = useRef({ x: 0, y: 0 });
 
+  // Responsive scaling based on viewport size
+  const getResponsiveScale = useCallback(() => {
+    if (typeof window === 'undefined') return scale;
+    const width = window.innerWidth;
+    if (width < 480) return scale * 0.6; // Mobile
+    if (width < 768) return scale * 0.8; // Small tablets
+    if (width < 1024) return scale * 0.9; // Tablets
+    return scale; // Desktop
+  }, [scale]);
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (!containerRef.current) return;
+      const { width, height } = containerRef.current.getBoundingClientRect();
+      setDimensions({ width, height });
+    };
+
+    const observer = new ResizeObserver(handleResize);
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+      handleResize();
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Handle visibility changes for performance
+  useEffect(() => {
+    if (!suspendWhenOffscreen) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0.1 }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [suspendWhenOffscreen]);
+
+  // Initialize and animate the 3D effect
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    if (!container || !isVisible) return;
 
-    const H = Math.max(0.001, height);
-    const BW = Math.max(0.001, baseWidth);
-    const BASE_HALF = BW * 0.5;
-    const GLOW = Math.max(0.0, glow);
-    const NOISE = Math.max(0.0, noise);
-    const offX = offset?.x ?? 0;
-    const offY = offset?.y ?? 0;
-    const SAT = transparent ? 1.5 : 1;
-    const SCALE = Math.max(0.001, scale);
-    const HUE = hueShift || 0;
-    const CFREQ = Math.max(0.0, colorFrequency || 1);
-    const BLOOM = Math.max(0.0, bloom || 1);
-    const RSX = 1;
-    const RSY = 1;
-    const RSZ = 1;
-    const TS = Math.max(0, timeScale || 1);
-    const HOVSTR = Math.max(0, hoverStrength || 1);
-    const INERT = Math.max(0, Math.min(1, inertia || 0.12));
-
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    // Get responsive settings
+    const settings = getPerformanceSettings();
+    const { dpr, antialias, powerPreference } = settings;
+    
+    // Calculate responsive scale
+    const responsiveScale = getResponsiveScale();
+    
+    // Initialize renderer with performance settings
     const renderer = new Renderer({
       dpr,
       alpha: transparent,
+      antialias,
+      powerPreference,
+      premultipliedAlpha: true,
+      stencil: false,
+      depth: true,
+      preserveDrawingBuffer: false,
+      autoClear: true,
       antialias: false
     });
     const gl = renderer.gl;
