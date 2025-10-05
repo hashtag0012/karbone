@@ -38,7 +38,6 @@ const Prism = ({
   animationType = 'rotate',
   maxSteps = 100,
   quality = 1.0,
-{{ ... }}
   glow = 1,
   offset = { x: 0, y: 0 },
   noise = 0.5,
