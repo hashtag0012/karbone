@@ -7,6 +7,7 @@ import { Card, CardContent } from '../components/ui/card'
 import Model3D from '../components/Model3D'
 import Prism from '../components/Prism'
 import Particles from '../components/Particles'
+import { getDeviceInfo, getResponsiveScale } from '../lib/responsive'
 
 const Home = () => {
   const features = [
@@ -62,36 +63,39 @@ const Home = () => {
       className="min-h-screen"
     >
       {/* Hero Section */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-4 sm:px-6 lg:px-8">
+      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
         {/* Background Image - Lowest Layer */}
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')] bg-cover bg-center opacity-20"></div>
           <div className="absolute inset-0 bg-gradient-to-t from-charcoal/70 via-charcoal/30 to-charcoal/50"></div>
         </div>
 
-        {/* 3D Model - Responsive scaling */}
-        <div className="relative z-10 w-full h-[50vh] md:h-[60vh] flex items-end justify-center">
-          <div className="w-full h-full max-w-md mx-auto transform scale-90 md:scale-100 transition-all duration-300">
-            <Model3D className="w-full h-full" />
-          </div>
+        {/* Prism Effect - Adaptive to device */}
+        <div className="absolute inset-0 z-5 pointer-events-none">
+          <Prism
+            animationType="rotate"
+            timeScale={0.5}
+            height={3.5}
+            baseWidth={5.5}
+            scale={getResponsiveScale(2.5, { minScale: 0.5, maxScale: 3.0 })}
+            hueShift={0.8}
+            colorFrequency={0.8}
+            noise={0.3}
+            glow={getResponsiveScale(0.8, { minScale: 0.2, maxScale: 1.2 })}
+            transparent={true}
+          />
         </div>
 
-        {/* Prism Effect - Responsive */}
-        <div className="absolute inset-0 z-5 flex items-center justify-center pointer-events-none">
-          <div className="relative w-full max-w-2xl h-[60vh] md:h-[70vh]">
-            <Prism
-              animationType="rotate"
-              timeScale={0.5}
-              height={3.5}
-              baseWidth={5.5}
-              scale={window.innerWidth < 768 ? 1.2 : 2}
-              hueShift={0.8}
-              colorFrequency={0.8}
-              noise={0.3}
-              glow={window.innerWidth < 768 ? 0.6 : 1.2}
-              transparent={true}
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300"
-            />
+        {/* 3D Model - Adaptive sizing */}
+        <div className="absolute inset-0 z-10 flex items-center justify-center">
+          <div className={`w-full h-full mx-auto transform transition-all duration-300 ${
+            getDeviceInfo().isMobile
+              ? 'max-w-[180px] scale-45'
+              : getDeviceInfo().isTablet
+              ? 'max-w-xs scale-65'
+              : 'max-w-2xl scale-100'
+          }`}>
+            <Model3D className="w-full h-full" />
           </div>
         </div>
 
@@ -110,48 +114,60 @@ const Home = () => {
         </div>
 
         {/* Text Content - Foreground */}
-        <div className="relative z-40 container-max px-6">
+        <div className="relative z-40 w-full px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center min-h-screen">
             <motion.div
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-center max-w-5xl"
+              className="text-center w-full max-w-5xl"
             >
-              <h1 className="luxury-heading-xl text-5xl md:text-7xl lg:text-9xl mb-12 text-gradient-alt">
+              <h1 className={`font-cinzel uppercase tracking-wide sm:tracking-widest font-bold text-gradient-alt px-2 mb-4 sm:mb-12`}
+                style={{
+                  fontSize: `${getResponsiveScale(4, { minScale: 1.5, maxScale: 6 })}rem`,
+                  lineHeight: 0.9
+                }}>
                 KARBORNE
               </h1>
               <motion.p
                 initial={{ y: 30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
-                className="text-2xl md:text-3xl lg:text-4xl font-light mb-8 text-champagne luxury-text-spacing"
+                className="text-champagne px-4 mb-3 sm:mb-8 font-light"
+                style={{
+                  fontSize: `${getResponsiveScale(1.5, { minScale: 0.8, maxScale: 3 })}rem`,
+                  letterSpacing: '0.05em'
+                }}
               >
-                LUXURY   CAFE   &   BISTRO
+                LUXURY CAFE & BISTRO
               </motion.p>
               <motion.p
                 initial={{ y: 30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.6 }}
-                className="text-xl md:text-2xl mb-16 max-w-4xl mx-auto leading-relaxed text-warm-gray luxury-text-spacing"
+                className="text-warm-gray px-4 mb-6 sm:mb-16 max-w-4xl mx-auto leading-relaxed"
+                style={{
+                  fontSize: `${getResponsiveScale(1, { minScale: 0.6, maxScale: 2 })}rem`,
+                  letterSpacing: '0.02em'
+                }}
               >
-                Experience   the   finest   culinary   journey   in   the   heart   of   Srinagar,   where   traditional   Kashmiri   flavors   meet   contemporary   elegance
+                Experience the finest culinary journey in the heart of Srinagar
               </motion.p>
               <motion.div
                 initial={{ y: 30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.8 }}
-                className="flex flex-col sm:flex-row gap-6 justify-center items-center"
+                className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center items-center px-4 max-w-md sm:max-w-none mx-auto"
               >
-                <Button variant="luxury" size="xl" asChild>
+                <Button variant="luxury" size="sm" className="w-full sm:w-auto text-xs sm:text-sm" asChild>
                   <Link to="/contact">
-                    Reserve Your Table
-                    <ArrowRight className="ml-2 w-5 h-5" />
+                    Reserve Table
+                    <ArrowRight className="ml-2 w-3 h-3 sm:w-4 sm:h-4" />
                   </Link>
                 </Button>
-                <Button variant="outline" size="xl" asChild>
+                <Button variant="outline" size="sm" className="w-full sm:w-auto text-xs sm:text-sm" asChild>
                   <Link to="/menu">
-                    Explore Menu
+                    View Menu
                   </Link>
                 </Button>
               </motion.div>
@@ -189,11 +205,11 @@ const Home = () => {
             viewport={{ once: true }}
             className="text-center mb-22"
           >
-            <h2 className="luxury-heading text-4xl md:text-6xl mb-10 text-gradient mega-text-spacing">
-              WHY   CHOOSE   KARBORNE
+            <h2 className="font-cinzel uppercase text-2xl sm:text-4xl md:text-6xl mb-6 sm:mb-10 text-gradient px-4" style={{ letterSpacing: '0.1em' }}>
+              WHY CHOOSE KARBORNE
             </h2>
-            <p className="text-xl md:text-2xl text-champagne max-w-3xl mx-auto leading-relaxed luxury-text-spacing">
-              Discover   what   makes   us   Srinagar's   premier   dining   destination
+            <p className="text-base sm:text-xl md:text-2xl text-champagne max-w-3xl mx-auto leading-relaxed px-4" style={{ letterSpacing: '0.05em' }}>
+              Discover what makes us Srinagar's premier dining destination
             </p>
           </motion.div>
 
@@ -206,16 +222,16 @@ const Home = () => {
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Card className="h-full hover-glow glass-effect-dark transition-all duration-500 hover:scale-110 tilt-card">
-                  <CardContent className="p-10 text-center">
-                    <div className="flex items-center justify-center mb-6">
-                      <span className="text-6xl mr-4">{feature.emoji}</span>
-                      <feature.icon className="w-16 h-16 text-gradient" />
+                <Card className="h-full hover-glow glass-effect-dark transition-all duration-500 sm:hover:scale-110 tilt-card">
+                  <CardContent className="p-6 sm:p-10 text-center">
+                    <div className="flex items-center justify-center mb-4 sm:mb-6">
+                      <span className="text-4xl sm:text-6xl mr-2 sm:mr-4">{feature.emoji}</span>
+                      <feature.icon className="w-12 h-12 sm:w-16 sm:h-16 text-gradient" />
                     </div>
-                    <h3 className="font-cinzel text-2xl font-semibold mb-6 text-gradient luxury-text-spacing">
+                    <h3 className="font-cinzel text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-gradient" style={{ letterSpacing: '0.05em' }}>
                       {feature.title}
                     </h3>
-                    <p className="text-champagne leading-relaxed text-lg luxury-text-spacing">
+                    <p className="text-champagne leading-relaxed text-base sm:text-lg">
                       {feature.description}
                     </p>
                   </CardContent>
@@ -235,14 +251,14 @@ const Home = () => {
               whileInView={{ x: 0, opacity: 1 }}
               viewport={{ once: true }}
             >
-              <h2 className="luxury-heading text-4xl md:text-6xl mb-10 text-gradient-alt mega-text-spacing">
-                OUR   STORY
+              <h2 className="font-cinzel uppercase text-2xl sm:text-4xl md:text-6xl mb-6 sm:mb-10 text-gradient-alt px-4 sm:px-0" style={{ letterSpacing: '0.1em' }}>
+                OUR STORY
               </h2>
-              <p className="text-xl text-champagne mb-8 leading-relaxed luxury-text-spacing">
-                Nestled   in   the   heart   of   Srinagar,   Karborne   represents   the   perfect   fusion   of   Kashmir's   rich   culinary   heritage   with   contemporary   fine   dining   excellence.   Our   journey   began   with   a   simple   vision:   to   create   an   extraordinary   dining   experience   that   celebrates   both   tradition   and   innovation.
+              <p className="text-base sm:text-xl text-champagne mb-6 sm:mb-8 leading-relaxed px-4 sm:px-0">
+                Nestled in the heart of Srinagar, Karborne represents the perfect fusion of Kashmir's rich culinary heritage with contemporary fine dining excellence. Our journey began with a simple vision: to create an extraordinary dining experience that celebrates both tradition and innovation.
               </p>
-              <p className="text-xl text-warm-gray mb-12 leading-relaxed luxury-text-spacing">
-                Every   dish   tells   a   story,   every   ingredient   is   carefully   selected,   and   every   moment   is   crafted   to   create   memories   that   last   a   lifetime.
+              <p className="text-base sm:text-xl text-warm-gray mb-8 sm:mb-12 leading-relaxed px-4 sm:px-0">
+                Every dish tells a story, every ingredient is carefully selected, and every moment is crafted to create memories that last a lifetime.
               </p>
               <Button variant="luxury" size="lg" asChild>
                 <Link to="/about">
