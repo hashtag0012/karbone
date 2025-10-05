@@ -120,7 +120,7 @@ const Prism = ({
     
     // Initialize renderer with optimized settings
     const renderer = new Renderer({
-      dpr,
+      dpr: settings.dpr, // Use the dpr from settings
       alpha: true,
       antialias: settings.antialias,
       powerPreference,
@@ -131,9 +131,6 @@ const Prism = ({
       autoClear: true,
       autoResize: true
     });
-    
-    // Set pixel ratio for better performance on mobile
-    renderer.setPixelRatio(settings.dpr);
     
     const gl = renderer.gl;
     
