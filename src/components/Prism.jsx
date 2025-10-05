@@ -1,4 +1,4 @@
-{{ ... }}
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Renderer, Triangle, Program, Mesh } from 'ogl';
 import { isMobile, isTablet } from '../lib/responsive';
 import './Prism.css';
