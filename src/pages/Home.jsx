@@ -62,33 +62,34 @@ const Home = () => {
       className="min-h-screen"
     >
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 sm:px-6 lg:px-8">
         {/* Background Image - Lowest Layer */}
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')] bg-cover bg-center opacity-20"></div>
           <div className="absolute inset-0 bg-gradient-to-t from-charcoal/70 via-charcoal/30 to-charcoal/50"></div>
         </div>
 
-        {/* 3D Model - Above Background (Hidden on mobile for performance) */}
-        <div className="absolute bottom-0 left-0 right-0 z-10 flex items-end justify-center pb-5 h-4/5 hidden md:block">
-          <div className="w-full h-full max-w-none">
+        {/* 3D Model - Responsive scaling */}
+        <div className="absolute bottom-0 left-0 right-0 z-10 flex items-end justify-center pb-5 h-4/5">
+          <div className="w-full h-full max-w-none transform scale-75 md:scale-100 transition-transform duration-300">
             <Model3D className="opacity-100" />
           </div>
         </div>
 
-        {/* Prism Effect - Above 3D Model */}
+        {/* Prism Effect - Responsive */}
         <div className="absolute inset-0 z-19">
           <Prism
             animationType="rotate"
             timeScale={0.5}
             height={3.5}
             baseWidth={5.5}
-            scale={2.5}
+            scale={window.innerWidth < 768 ? 1.5 : 2.5}
             hueShift={0.8}
             colorFrequency={0.8}
             noise={0.3}
-            glow={1.2}
+            glow={window.innerWidth < 768 ? 0.8 : 1.2}
             transparent={true}
+            className="transition-all duration-300"
           />
         </div>
 
