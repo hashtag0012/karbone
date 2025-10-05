@@ -122,14 +122,13 @@ const Prism = ({
     const renderer = new Renderer({
       dpr,
       alpha: true,
-      antialias: !isMobile(),
+      antialias: settings.antialias,
       powerPreference,
       premultipliedAlpha: true,
       stencil: false,
       depth: false,
       preserveDrawingBuffer: false,
       autoClear: true,
-      antialias: settings.antialias,
       autoResize: true
     });
     
